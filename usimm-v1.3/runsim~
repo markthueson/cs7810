@@ -1,13 +1,10 @@
 MYPATH="/home/thueson/cs7810/usimm-v1.3"
 ssh thueson@lab2-11.eng.utah.edu "$MYPATH/bin/usimm $MYPATH/input/1channel.cfg $MYPATH/input/comm2 > $MYPATH/output/c2-1 &"
 ssh thueson@lab2-10.eng.utah.edu "$MYPATH/bin/usimm $MYPATH/input/1channel.cfg $MYPATH/input/comm1 $MYPATH/input/comm1 > $MYPATH/output/c1-c1-1 &"
-#ssh thueson@lab2-9.eng.utah.edu "$MYPATH/bin/usimm 
-$MYPATH/input/1channel.cfg $MYPATH/input/comm1 $MYPATH/input/comm1 $MYPATH/input/comm2 $MYPATH/input/comm2 > $MYPATH/output/c1-c1-c2-c2-1 &"
-##ssh thueson@lab2-8.eng.utah.edu "$MYPATH/bin/usimm 
-$MYPATH/input/1channel.cfg $MYPATH/input/MT0-canneal $MYPATH/input/MT1-canneal $MYPATH/input/MT2-canneal $MYPATH/input/MT3-canneal > $MYPATH/output/MTc-1 &"
-#ssh thueson@lab2-7.eng.utah.edu "$MYPATH/bin/usimm 
-$MYPATH/input/1channel.cfg $MYPATH/input/fluid $MYPATH/input/swapt $MYPATH/input/comm2 $MYPATH/input/comm2 > $MYPATH/output/fl-sw-c2-c2-1 &"
-#ssh thueson@lab2-6.eng.utah.edu "$MYPATH/bin/usimm $MYPATH/input/1channel.cfg $MYPATH/input/face $MYPATH/input/face $MYPATH/input/ferret $MYPATH/input/ferret > $MYPATH/output/fa-fa-fe-fe-1 &"
+ssh thueson@lab2-9.eng.utah.edu "$MYPATH/bin/usimm $MYPATH/input/1channel.cfg $MYPATH/input/comm1 $MYPATH/input/comm1 $MYPATH/input/comm2 $MYPATH/input/comm2 > $MYPATH/output/c1-c1-c2-c2-1 &"
+ssh thueson@lab2-8.eng.utah.edu "$MYPATH/bin/usimm $MYPATH/input/1channel.cfg $MYPATH/input/MT0-canneal $MYPATH/input/MT1-canneal $MYPATH/input/MT2-canneal $MYPATH/input/MT3-canneal > $MYPATH/output/MTc-1 &"
+ssh thueson@lab2-7.eng.utah.edu "$MYPATH/bin/usimm $MYPATH/input/1channel.cfg $MYPATH/input/fluid $MYPATH/input/swapt $MYPATH/input/comm2 $MYPATH/input/comm2 > $MYPATH/output/fl-sw-c2-c2-1 &"
+ssh thueson@lab2-6.eng.utah.edu "$MYPATH/bin/usimm $MYPATH/input/1channel.cfg $MYPATH/input/face $MYPATH/input/face $MYPATH/input/ferret $MYPATH/input/ferret > $MYPATH/output/fa-fa-fe-fe-1 &"
 ssh thueson@lab2-5.eng.utah.edu "$MYPATH/bin/usimm $MYPATH/input/1channel.cfg $MYPATH/input/black $MYPATH/input/black $MYPATH/input/freq $MYPATH/input/freq > $MYPATH/output/bl-bl-fr-fr-1 &"
 ssh thueson@lab2-4.eng.utah.edu "$MYPATH/bin/usimm $MYPATH/input/1channel.cfg $MYPATH/input/stream $MYPATH/input/stream $MYPATH/input/stream $MYPATH/input/stream > $MYPATH/output/st-st-st-st-1 &"
 

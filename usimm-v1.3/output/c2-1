@@ -3,7 +3,7 @@
 --              Version: 1.3               --
 ---------------------------------------------
 Initializing.
-Core 0: Input trace file input/comm2 : Addresses will have prefix 0
+Core 0: Input trace file /home/thueson/cs7810/usimm-v1.3/input/comm2 : Addresses will have prefix 0
 Reading vi file: 1Gb_x4.vi	
 16 Chips per Rank
 ----------------------------------------------------------------------------------------

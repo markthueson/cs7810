@@ -147,35 +147,35 @@ int main(int argc, char * argv[])
 
 	/* Find the appropriate .vi file to read*/
 	if (NUM_CHANNELS == 1 && NUMCORES == 1) {
-  		vi_file = fopen("/home/thueson/cs7810/usimm-v1.3/input/1Gb_x4.vi", "r"); 
+  		vi_file = fopen("/home/thueson/input/1Gb_x4.vi", "r"); 
 		chips_per_rank= 16;
   		printf("Reading vi file: 1Gb_x4.vi\t\n%d Chips per Rank\n",chips_per_rank); 
 	} else if (NUM_CHANNELS == 1 && NUMCORES == 2) {
-  		vi_file = fopen("/home/thueson/cs7810/usimm-v1.3/input/2Gb_x4.vi", "r");
+  		vi_file = fopen("/home/thueson/input/2Gb_x4.vi", "r");
 		chips_per_rank= 16;
   		printf("Reading vi file: 2Gb_x4.vi\t\n%d Chips per Rank\n",chips_per_rank);
 	} else if (NUM_CHANNELS == 1 && (NUMCORES > 2) && (NUMCORES <= 4)) {
-  		vi_file = fopen("/home/thueson/cs7810/usimm-v1.3/input/4Gb_x4.vi", "r");
+  		vi_file = fopen("/home/thueson/input/4Gb_x4.vi", "r");
 		chips_per_rank= 16;
   		printf("Reading vi file: 4Gb_x4.vi\t\n%d Chips per Rank\n",chips_per_rank);
 	} else if (NUM_CHANNELS == 4 && NUMCORES == 1) {
-  		vi_file = fopen("/home/thueson/cs7810/usimm-v1.3/input/1Gb_x16.vi", "r");
+  		vi_file = fopen("/home/thueson/input/1Gb_x16.vi", "r");
 		chips_per_rank= 4;
   		printf("Reading vi file: 1Gb_x16.vi\t\n%d Chips per Rank\n",chips_per_rank);
 	} else if (NUM_CHANNELS == 4 && NUMCORES == 2) {
-  		vi_file = fopen("/home/thueson/cs7810/usimm-v1.3/input/1Gb_x8.vi", "r");
+  		vi_file = fopen("/home/thueson/input/1Gb_x8.vi", "r");
 		chips_per_rank= 8;
   		printf("Reading vi file: 1Gb_x8.vi\t\n%d Chips per Rank\n",chips_per_rank);
 	} else if (NUM_CHANNELS == 4 && (NUMCORES > 2) && (NUMCORES <= 4)) {
-  		vi_file = fopen("/home/thueson/cs7810/usimm-v1.3/input/2Gb_x8.vi", "r");
+  		vi_file = fopen("/home/thueson/input/2Gb_x8.vi", "r");
 		chips_per_rank= 8;
   		printf("Reading vi file: 2Gb_x8.vi\t\n%d Chips per Rank\n",chips_per_rank);
 	} else if (NUM_CHANNELS == 4 && (NUMCORES > 4) && (NUMCORES <= 8)) {
-  		vi_file = fopen("/home/thueson/cs7810/usimm-v1.3/input/4Gb_x8.vi", "r");
+  		vi_file = fopen("/home/thueson/input/4Gb_x8.vi", "r");
 		chips_per_rank= 8;
   		printf("Reading vi file: 4Gb_x8.vi\t\n%d Chips per Rank\n",chips_per_rank);
 	} else if (NUM_CHANNELS == 4 && (NUMCORES > 8) && (NUMCORES <= 16)) {
-  		vi_file = fopen("/home/thueson/cs7810/usimm-v1.3/input/4Gb_x4.vi", "r");
+  		vi_file = fopen("/home/thueson/input/4Gb_x4.vi", "r");
 		chips_per_rank= 16;
   		printf("Reading vi file: 4Gb_x4.vi\t\n%d Chips per Rank\n",chips_per_rank);
 	} else {
