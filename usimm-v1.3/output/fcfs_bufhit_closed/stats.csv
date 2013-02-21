@@ -1,0 +1,18 @@
+Workload,Execution Time,Execution Time,Execution Time,Execution Time,Execution Time,Execution Time,Execution Time,Execution Time,Execution Time,Execution Time,Execution Time,Execution Time,Execution Time,Execution Time,Execution Time,Execution Time,,Max SlowDown, SlowDown, SlowDown, SlowDown, SlowDown, SlowDown, SlowDown, SlowDown, SlowDown, SlowDown, SlowDown, SlowDown, SlowDown, SlowDown, SlowDown, SlowDown, SlowDown...
+bl-bl-fr-fr-1,375683451,375729252,359296991,359263255,,1.18097868498489,1.18083472492732,1.18097868498489,1.17454599943618,1.17443571606385,
+c1-c1-1,411160148,411135055,,,,1.10261020533547,1.10261020533547,1.10254291331308,,,
+c2-1,431657084,,,,,0,,,,,
+st-st-st-st-1,394083839,396968171,401695703,401913040,,1.25424840627617,1.22981585022706,1.23881697349037,1.25357016357502,1.25424840627617,
+
+
+Total Exection Time, 4318585989
+PFP Avg Max Slowdown, 1.17927909886551
+PFP, 4583774016.4427
+
+
+Work Load, EDP
+bl-bl-fr-fr-1, 0.482456297
+c1-c1-1, 0.400980383
+c2-1, 0.368567169
+st-st-st-st-1, 0.565341175
+Total, 1.817345024

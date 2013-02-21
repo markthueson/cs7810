@@ -1,0 +1,3 @@
+#!/bin/sh
+bin/usimm input/1channel.cfg input/comm2
+
