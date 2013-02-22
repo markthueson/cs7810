@@ -94,9 +94,7 @@ void schedule(int channel)
 		    write_wait_cycles = 0;
 		    drain_writes[channel] = 1;
 		  }
-	  }
-	  else if (!read_queue_length[channel])
-		drain_writes[channel] = 1;
+	  }else drain_writes[channel] = 1;
 	}
 
 

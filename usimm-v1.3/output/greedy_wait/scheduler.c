@@ -7,10 +7,6 @@
 
 extern long long int CYCLE_VAL;
 
-int recent_colacc[MAX_NUM_CHANNELS][MAX_NUM_RANKS][MAX_NUM_BANKS];
-int autocharge_predictor[4096];
-
-long long int num_aggr_precharge = 0;
 long long int row_buffer_hits = 0;
 long long int read_while_wait = 0;
 int write_wait_cycles = 0;
@@ -18,17 +14,7 @@ int write_wait_cycles = 0;
 void init_scheduler_vars()
 {
 	// initialize all scheduler variables here
-	int i, j, k;
-	for (i=0; i<MAX_NUM_CHANNELS; i++) {
-	  for (j=0; j<MAX_NUM_RANKS; j++) {
-	    for (k=0; k<MAX_NUM_BANKS; k++) {
-	      recent_colacc[i][j][k] = 0;
-	    }
-	  }
-	}
-	for (i=0; i<4096; i++) {
-	  autocharge_predictor[i] = 0;
-	}
+
 	return;
 }
 
@@ -94,9 +80,7 @@ void schedule(int channel)
 		    write_wait_cycles = 0;
 		    drain_writes[channel] = 1;
 		  }
-	  }
-	  else if (!read_queue_length[channel])
-		drain_writes[channel] = 1;
+	  }else drain_writes[channel] = 1;
 	}
 
 
@@ -117,7 +101,7 @@ void schedule(int channel)
 					my_wr = wr_ptr;
 					if(my_wr->next_command == COL_WRITE_CMD)
 					{
-						//row_buffer_hits += 1;
+						row_buffer_hits += 1;
 						hit = 1;
 					}
 				}
@@ -132,16 +116,6 @@ void schedule(int channel)
 		if(my_wr)
 		{
 			issue_request_command(my_wr);
-			if (my_wr->next_command == COL_WRITE_CMD) {
-			  recent_colacc[channel][my_wr->dram_addr.rank][my_wr->dram_addr.bank] = 1;	
-			}
-			if (my_wr->next_command == ACT_CMD) {
-			  recent_colacc[channel][my_wr->dram_addr.rank][my_wr->dram_addr.bank] = 0;
-			}
-			if (my_wr->next_command == PRE_CMD) {
-			  recent_colacc[channel][my_wr->dram_addr.rank][my_wr->dram_addr.bank] = 0;
-			}
-
 		}
 		return;
 	}
@@ -164,7 +138,7 @@ void schedule(int channel)
 					my_rd = rd_ptr;
 					if(my_rd->next_command == COL_READ_CMD)
 					{
-						//row_buffer_hits += 1;
+						row_buffer_hits += 1;
 						hit = 1;
 					}
 				}
@@ -178,43 +152,18 @@ void schedule(int channel)
 		}
 		if(my_rd)
 		{
-			issue_request_command(my_rd);
-			if (my_rd->next_command == COL_READ_CMD) {
-			  recent_colacc[channel][my_rd->dram_addr.rank][my_rd->dram_addr.bank] = 1;
-			}
-			if (my_rd->next_command == ACT_CMD) {
-			  recent_colacc[channel][my_rd->dram_addr.rank][my_rd->dram_addr.bank] = 0;
-			}
-			if (my_rd->next_command == PRE_CMD) {
-			  recent_colacc[channel][my_rd->dram_addr.rank][my_rd->dram_addr.bank] = 0;
-			}
 			if(write_wait_cycles != 0)
 				read_while_wait += 1;
 			write_wait_cycles = 0;
+			issue_request_command(my_rd);
+		}
+		return;
+	}
 
-		}
-		//return;
-	}
-	/* If a command hasn't yet been issued to this channel in this cycle, issue a precharge. */
-	if (!command_issued_current_cycle[channel]) {
-	  for (i=0; i<NUM_RANKS; i++) {
-	    for (j=0; j<NUM_BANKS; j++) {  /* For all banks on the channel.. */
-	      if (recent_colacc[channel][i][j]) {  /* See if this bank is a candidate. */
-	        if (is_precharge_allowed(channel,i,j)) {  /* See if precharge is doable. */
-		  if (issue_precharge_command(channel,i,j)) {
-		    num_aggr_precharge++;
-		    recent_colacc[channel][i][j] = 0;
-		  }
-		}
-	      }
-	    }
-	  }
-	}
 }
 
 void scheduler_stats()
 {
-  printf("Number of aggressive precharges: %lld\n", num_aggr_precharge);
   printf("Number of buffer hits: %lld\n", row_buffer_hits);
   printf("Number of reads from wait: %lld\n", read_while_wait);
 }

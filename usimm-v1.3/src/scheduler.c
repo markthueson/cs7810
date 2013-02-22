@@ -1,19 +1,68 @@
 #include <stdio.h>
 #include "utlist.h"
 #include "utils.h"
+#include "params.h"
+#include <stdlib.h>
 
 #include "memory_controller.h"
 
+#define MAXINDEXTABLE 1024
+
+
+
+
+struct ToBeIssued
+{
+	int issue;
+	int rank;
+	int bank;
+	long long int row;
+};
+
+struct ToBeIssued tbi[MAX_NUM_CHANNELS];
+
+//variables required for stats print
+int number_of_spec_activates;
+int number_of_hits;
+
+int activates[MAX_NUM_CHANNELS][MAX_NUM_RANKS][MAX_NUM_BANKS];
+		
+
 extern long long int CYCLE_VAL;
 
-long long int row_buffer_hits = 0;
-long long int read_while_wait = 0;
-int write_wait_cycles = 0;
+//previous read queue sizes
+int prev_rqsize[MAX_NUM_CHANNELS];
+
+
+
 
 void init_scheduler_vars()
 {
+	int i;
 	// initialize all scheduler variables here
+	for (i=0; i<MAX_NUM_CHANNELS;i++)
+	{
+		prev_rqsize[i] = 0;
+	}
+	number_of_spec_activates=0;
+	number_of_hits=0;
 
+	
+	int o;
+		int p;
+		
+		for(i=0;i<MAX_NUM_CHANNELS;i++){
+		for (o=0; o<MAX_NUM_RANKS; o++) {
+	  		for (p=0; p<MAX_NUM_BANKS; p++) {
+	     			activates[i][o][p]=0;
+					
+	  		}
+		}
+		}
+	for (i=0 ; i<MAX_NUM_CHANNELS ; i++)
+	{
+		tbi[i].issue = 0;
+	}
 	return;
 }
 
@@ -50,6 +99,21 @@ void schedule(int channel)
 {
 	request_t * rd_ptr = NULL;
 	request_t * wr_ptr = NULL;
+	request_t * updater = NULL;
+	int i=0;
+	
+	//find position in read queue where new entries start
+	LL_FOREACH(read_queue_head[channel], updater)
+	{
+		if(i == prev_rqsize[channel])
+			break;
+		else
+			i++;			
+	}
+
+	
+	
+	prev_rqsize[channel] = read_queue_length[channel];
 
 
 	// if in write drain mode, keep draining writes until the
@@ -70,93 +134,107 @@ void schedule(int channel)
 	}
 	else {
 	  if (!read_queue_length[channel])
-	    write_wait_cycles += 1;
-	  if(write_wait_cycles > 6)
-	  {
-	    write_wait_cycles = 0;
 	    drain_writes[channel] = 1;
-	  }
 	}
-
-
-	// If in write drain mode, look through all the write queue
-	// elements (already arranged in the order of arrival), and
-	// issue the command for the first request that is ready
+	
+	int j;
+	
+	int o;
+		int p;
+		
+		int Isused[MAX_NUM_RANKS][MAX_NUM_BANKS];
+		for (o=0; o<MAX_NUM_RANKS; o++) {
+	  		for (p=0; p<MAX_NUM_BANKS; p++) {
+	     			Isused[o][p]=0;
+					
+	  		}
+		}
 	if(drain_writes[channel])
 	{
-		request_t * my_wr = NULL;
-		int hit = 0;
-		//LL_FOREACH(read_queue_head[channel],rd_ptr)
-		for(wr_ptr=write_queue_head[channel];!hit && wr_ptr;wr_ptr=wr_ptr->next)
+		
+		//go through write queue
+		LL_FOREACH(write_queue_head[channel], wr_ptr)
+		{
+			//label isused accordingly
+			if(Isused[wr_ptr->dram_addr.rank][wr_ptr->dram_addr.bank]==0)
+				Isused[wr_ptr->dram_addr.rank][wr_ptr->dram_addr.bank]=2;
+			
+			//first ready served
+			if(wr_ptr->command_issuable && wr_ptr->next_command == COL_WRITE_CMD)
+			{
+				if(activates[channel][wr_ptr->dram_addr.rank][wr_ptr->dram_addr.bank] == 1)
+					number_of_hits ++;
+				issue_request_command(wr_ptr);
+				tbi[channel].issue = 0;
+				return;
+			}
+			
+		}
+		LL_FOREACH(write_queue_head[channel], wr_ptr)
 		{
 			if(wr_ptr->command_issuable)
 			{
-				if(!my_wr)
-				{
-					my_wr = wr_ptr;
-					if(my_wr->next_command == COL_WRITE_CMD)
-					{
-						row_buffer_hits += 1;
-						hit = 1;
-					}
-				}
-				else if(!hit && wr_ptr->next_command == COL_WRITE_CMD)
-				{
-					row_buffer_hits += 1;
-					hit = 1;
-					my_wr = wr_ptr;
-				}
+				if(wr_ptr->next_command == PRE_CMD)
+					activates[channel][wr_ptr->dram_addr.rank][wr_ptr->dram_addr.bank] = 0 ;
+				issue_request_command(wr_ptr);
+				tbi[channel].issue = 0;
+				return;
 			}
+			
 		}
-		if(my_wr)
-			issue_request_command(my_wr);
-		return;
 	}
+		LL_FOREACH(read_queue_head[channel],rd_ptr)
+		{
+			if(Isused[rd_ptr->dram_addr.rank][rd_ptr->dram_addr.bank]==0)
+				Isused[rd_ptr->dram_addr.rank][rd_ptr->dram_addr.bank]=1;
+			else if (Isused[rd_ptr->dram_addr.rank][rd_ptr->dram_addr.bank]==2)
+				Isused[rd_ptr->dram_addr.rank][rd_ptr->dram_addr.bank]=3;
 
-	// Draining Reads
-	// look through the queue and find the first request whose
-	// command can be issued in this cycle and issue it 
-	// Simple FCFS 
-	if(!drain_writes[channel])
-	{
-		request_t * my_rd = NULL;
-		int hit = 0;
-		//LL_FOREACH(read_queue_head[channel],rd_ptr)
-		for(rd_ptr=read_queue_head[channel];!hit && rd_ptr;rd_ptr=rd_ptr->next)
-		{
-			if(rd_ptr->command_issuable)
+
+			if(rd_ptr->command_issuable && rd_ptr->next_command == COL_READ_CMD && !drain_writes[channel] && Isused[rd_ptr->dram_addr.rank][rd_ptr->dram_addr.bank]<2)
 			{
-				if(!my_rd)
-				{
-					my_rd = rd_ptr;
-					if(my_rd->next_command == COL_READ_CMD)
-					{
-						row_buffer_hits += 1;
-						hit = 1;
-					}
-				}
-				else if(!hit && rd_ptr->next_command == COL_READ_CMD)
-				{
-					row_buffer_hits += 1;
-					hit = 1;
-					my_rd = rd_ptr;
-				}
+				if(activates[channel][rd_ptr->dram_addr.rank][rd_ptr->dram_addr.bank] == 1)
+					number_of_hits ++;
+				issue_request_command(rd_ptr);
+				prev_rqsize[channel] = prev_rqsize[channel] - 1;
+				tbi[channel].issue = 0;
+				return;
 			}
 		}
-		if(my_rd)
+		
+
+		LL_FOREACH(read_queue_head[channel],rd_ptr)
 		{
-			if(write_wait_cycles != 0)
-				read_while_wait += 1;
-			write_wait_cycles = 0;
-			issue_request_command(my_rd);
+			if(rd_ptr->command_issuable && Isused[rd_ptr->dram_addr.rank][rd_ptr->dram_addr.bank]<2)
+			{
+				if(rd_ptr->next_command == PRE_CMD)
+					activates[channel][rd_ptr->dram_addr.rank][rd_ptr->dram_addr.bank] = 0 ;
+				issue_request_command(rd_ptr);
+				tbi[channel].issue = 0;
+				return;
+			}
 		}
-		return;
-	}
+		//precharge from write queue
+		LL_FOREACH(write_queue_head[channel], wr_ptr)
+		{
+			if(wr_ptr->command_issuable && wr_ptr->next_command == PRE_CMD && Isused[wr_ptr->dram_addr.rank][wr_ptr->dram_addr.bank]%2==0)
+			{
+				activates[channel][wr_ptr->dram_addr.rank][wr_ptr->dram_addr.bank] =0;
+				issue_request_command(wr_ptr);
+				tbi[channel].issue = 0;
+				return;
+			}
+			
+		}
+		
+
 }
 
 void scheduler_stats()
 {
-  printf("Number of buffer hits: %lld\n", row_buffer_hits);
-  printf("Number of reads from wait: %lld\n", read_while_wait);
-}
+	printf("\nNumber of speculative activates = %d ", number_of_spec_activates);
+	printf("\nNumber of row hits = %d ", number_of_hits);
+	
 
+  /* Nothing to print for now. */
+}

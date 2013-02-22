@@ -1,0 +1,4 @@
+#!/bin/sh
+bin/usimm input/1channel.cfg input/comm2 > output/c2-1 &
+
+
