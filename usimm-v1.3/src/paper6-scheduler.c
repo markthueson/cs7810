@@ -240,12 +240,12 @@ void schedule(int channel)
 				{
 					if (rd_ptr->next_command == COL_READ_CMD) {
 					}
-					//if (rd_ptr->next_command == ACT_CMD) {
-                                        //    request_t * tmp_ptr = get_rob_top(channel);
-                                        //    if (tmp_ptr != NULL) {
-                                        //        rd_ptr = tmp_ptr;
-                                        //    }
-					//}
+					if (rd_ptr->next_command == ACT_CMD) {
+                                            request_t * tmp_ptr = get_rob_top(channel);
+                                            if (tmp_ptr != NULL) {
+                                                rd_ptr = tmp_ptr;
+                                            }
+					}
 					if (rd_ptr->next_command == PRE_CMD) {
                                                 if (dram_state[channel][rd_ptr->dram_addr.rank][rd_ptr->dram_addr.bank].state == PRECHARGING) {
                                                     continue;

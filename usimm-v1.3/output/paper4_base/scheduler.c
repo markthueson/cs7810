@@ -1,14 +1,23 @@
 #include <stdio.h>
 #include "utlist.h"
 #include "utils.h"
+#include "params.h"
+#include <stdlib.h>
 
 #include "memory_controller.h"
 
-extern long long int CYCLE_VAL;
 
 void init_scheduler_vars()
 {
+	int i;
 	// initialize all scheduler variables here
+	for (i=0; i<MAX_NUM_CHANNELS;i++)
+	{
+		prev_rqsize[i] = 0;
+	}
+	number_of_spec_activates=0;
+	number_of_hits=0;
+
 
 	return;
 }
@@ -46,6 +55,18 @@ void schedule(int channel)
 {
 	request_t * rd_ptr = NULL;
 	request_t * wr_ptr = NULL;
+	request_t * updater = NULL;
+	int i=0;
+	
+	//find position in read queue where new entries start
+	LL_FOREACH(read_queue_head[channel], updater)
+	{
+		if(i == prev_rqsize[channel])
+			break;
+		else
+			i++;			
+	}
+
 
 
 	// if in write drain mode, keep draining writes until the
@@ -68,45 +89,99 @@ void schedule(int channel)
 	  if (!read_queue_length[channel])
 	    drain_writes[channel] = 1;
 	}
-
-
-	// If in write drain mode, look through all the write queue
-	// elements (already arranged in the order of arrival), and
-	// issue the command for the first request that is ready
+	
+	int j;
+	
+	int o;
+		int p;
+		
+		int Isused[MAX_NUM_RANKS][MAX_NUM_BANKS];
+		for (o=0; o<MAX_NUM_RANKS; o++) {
+	  		for (p=0; p<MAX_NUM_BANKS; p++) {
+	     			Isused[o][p]=0;
+					
+	  		}
+		}
 	if(drain_writes[channel])
 	{
-
+		
+		//go through write queue
 		LL_FOREACH(write_queue_head[channel], wr_ptr)
 		{
-			if(wr_ptr->command_issuable)
+			//label isused accordingly
+			if(Isused[wr_ptr->dram_addr.rank][wr_ptr->dram_addr.bank]==0)
+				Isused[wr_ptr->dram_addr.rank][wr_ptr->dram_addr.bank]=2;
+			
+			
+			//first ready served
+			if(wr_ptr->command_issuable && wr_ptr->next_command == COL_WRITE_CMD)
 			{
+				if(activates[channel][wr_ptr->dram_addr.rank][wr_ptr->dram_addr.bank] == 1)
+					number_of_hits ++;
 				issue_request_command(wr_ptr);
-				break;
+				tbi[channel].issue = 0;
+				return;
 			}
+			
 		}
-		return;
-	}
+	
+		
+		
 
-	// Draining Reads
-	// look through the queue and find the first request whose
-	// command can be issued in this cycle and issue it 
-	// Simple FCFS 
-	if(!drain_writes[channel])
-	{
+		
+		
+		
+	}
+	
+	
+		
+
 		LL_FOREACH(read_queue_head[channel],rd_ptr)
 		{
-			if(rd_ptr->command_issuable)
+
+			
+			
+			
+			if(Isused[rd_ptr->dram_addr.rank][rd_ptr->dram_addr.bank]==0)
+				Isused[rd_ptr->dram_addr.rank][rd_ptr->dram_addr.bank]=1;
+			else if (Isused[rd_ptr->dram_addr.rank][rd_ptr->dram_addr.bank]==2)
+				Isused[rd_ptr->dram_addr.rank][rd_ptr->dram_addr.bank]=3;
+
+
+			if(rd_ptr->command_issuable && rd_ptr->next_command == COL_READ_CMD && !drain_writes[channel] && Isused[rd_ptr->dram_addr.rank][rd_ptr->dram_addr.bank]<2)
 			{
+				if(activates[channel][rd_ptr->dram_addr.rank][rd_ptr->dram_addr.bank] == 1)
+					number_of_hits ++;
 				issue_request_command(rd_ptr);
-				break;
+				prev_rqsize[channel] = prev_rqsize[channel] - 1;
+				tbi[channel].issue = 0;
+				return;
 			}
 		}
-		return;
-	}
+		
+
+		
+		//precharge from write queue
+		LL_FOREACH(write_queue_head[channel], wr_ptr)
+		{
+			if(wr_ptr->command_issuable && wr_ptr->next_command == PRE_CMD && Isused[wr_ptr->dram_addr.rank][wr_ptr->dram_addr.bank]%2==0)
+			{
+				activates[channel][wr_ptr->dram_addr.rank][wr_ptr->dram_addr.bank] =0;
+				issue_request_command(wr_ptr);
+				tbi[channel].issue = 0;
+				return;
+			}
+			
+		}
+		
+		
 }
 
 void scheduler_stats()
 {
+	printf("\nNumber of speculative activates = %d ", number_of_spec_activates);
+	printf("\nNumber of row hits = %d ", number_of_hits);
+	
+
   /* Nothing to print for now. */
 }
-
